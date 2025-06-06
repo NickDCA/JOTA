@@ -2,23 +2,16 @@ package com.nicolasdca.task_manager.controller
 
 import com.nicolasdca.task_manager.database.model.Task
 import com.nicolasdca.task_manager.database.model.TaskPriority
-import com.nicolasdca.task_manager.database.model.TaskPriority.NORMAL
 import com.nicolasdca.task_manager.database.model.TaskStatus
-import com.nicolasdca.task_manager.database.model.TaskStatus.*
 import com.nicolasdca.task_manager.database.repository.TaskRepository
 import org.bson.types.ObjectId
-import org.springframework.data.mongodb.core.aggregation.ObjectOperators.ObjectToArray
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
 
-// http://localhost:8080/tasks
-// http://localhost:8080/tasks?ownerId=123
+// POST http://localhost:8080/tasks
+// GET  http://localhost:8080/tasks?ownerId=123
+// DELETE http://localhost:8080/tasks/123
 @RestController
 @RequestMapping("/tasks")
 class TaskController(
@@ -71,6 +64,11 @@ class TaskController(
         return repository.findByOwnerId(ObjectId(ownerId)).map {
             it.toResponse()
         }
+    }
+
+    @DeleteMapping(path = ["/{id}"])
+    fun deleteById(@PathVariable id: String) {
+        repository.deleteById(ObjectId(id))
     }
 }
 
