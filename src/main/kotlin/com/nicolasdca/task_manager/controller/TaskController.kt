@@ -5,6 +5,8 @@ import com.nicolasdca.task_manager.database.model.TaskPriority
 import com.nicolasdca.task_manager.database.model.TaskStatus
 import com.nicolasdca.task_manager.database.repository.TaskRepository
 import org.bson.types.ObjectId
+import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
@@ -40,6 +42,7 @@ class TaskController(
     fun save(
         @RequestBody body: TaskRequest
     ): TaskResponse {
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         val task = repository.save(
             Task(
                 id = body.id?.let { ObjectId(it) } ?: ObjectId.get(),
@@ -47,7 +50,7 @@ class TaskController(
                 description = body.description,
                 status = body.status ?: TaskStatus.PENDING,
                 priority = body.priority ?: TaskPriority.NORMAL,
-                ownerId = ObjectId(),
+                ownerId = ObjectId(ownerId),
                 createdAt = Instant.now()
             )
         )
@@ -58,9 +61,8 @@ class TaskController(
     }
 
     @GetMapping
-    fun findByOwnerId(
-        @RequestParam(required = true) ownerId: String
-    ): List<TaskResponse> {
+    fun findByOwnerId(): List<TaskResponse> {
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         return repository.findByOwnerId(ObjectId(ownerId)).map {
             it.toResponse()
         }
@@ -68,7 +70,14 @@ class TaskController(
 
     @DeleteMapping(path = ["/{id}"])
     fun deleteById(@PathVariable id: String) {
-        repository.deleteById(ObjectId(id))
+        val task = repository.findById(ObjectId(id)).orElseThrow {
+            IllegalArgumentException("Task not found")
+        }
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
+        if(task.ownerId.toHexString() == ownerId) {
+            repository.deleteById(ObjectId(id))
+        }
+
     }
 }
 
