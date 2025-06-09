@@ -4,6 +4,8 @@ import com.nicolasdca.task_manager.database.model.Task
 import com.nicolasdca.task_manager.database.model.TaskPriority
 import com.nicolasdca.task_manager.database.model.TaskStatus
 import com.nicolasdca.task_manager.database.repository.TaskRepository
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.bson.types.ObjectId
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
@@ -22,11 +24,11 @@ class TaskController(
 
     data class TaskRequest(
         val id: String?,
+        @field:NotBlank(message = "Title can't be blank")
         val title: String,
         val description: String,
         val status: TaskStatus?,
         val priority: TaskPriority?
-//        val ownerId: String
     )
 
     data class TaskResponse(
@@ -40,7 +42,7 @@ class TaskController(
 
     @PostMapping
     fun save(
-        @RequestBody body: TaskRequest
+        @Valid @RequestBody body: TaskRequest
     ): TaskResponse {
         val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         val task = repository.save(
